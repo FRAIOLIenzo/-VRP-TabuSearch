@@ -114,3 +114,11 @@ print("tabou de taille 5")
 sol = recherche_tabou(sac, taille_tabou=5, iter_max=30)
 print("valeur finale = " + str(valeur_contenu(sol)) + ", capacite="+str(poids_contenu(sol)) + "/" + str(capacite))
 print([i for i, val in enumerate(sol) if val]) # composition de la solution
+
+# TODO : faire valeur aléatoire pour représenter les coordonées des villes pour VRP
+# TODO : faire algo pour trouver distance entre toutes les villes 
+# TODO : enlever valeur des objets 
+# TODO : enlever capacité du sac car on ne l'utilise pas dans le TSP
+# TODO : passer par toutes les villes avec même départ
+# TODO : changer les voisins aléatoirement pour avoir une distance plus courte 
+# TODO : faire les stat descriptive sur cette algo 
