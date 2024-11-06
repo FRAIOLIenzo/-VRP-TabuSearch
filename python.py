@@ -9,10 +9,9 @@ def random_objets(poids_max, val_max):
     
     Renvoie un tuple de 2 dictionnaires (poids,valeur)
     """
-    poids_objets =\
-        {i: random.randint(1, poids_max) for i in range(nb_objets)} 
-    valeur_objets =\
-        {i: random.randint(1, val_max) for i in range(nb_objets)}   
+    poids_objets = {i: random.randint(1, poids_max) for i in range(nb_objets)} 
+
+    valeur_objets = {i: random.randint(1, val_max) for i in range(nb_objets)}   
                                                                     
     return poids_objets, valeur_objets                              
                                                       
@@ -95,9 +94,9 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max):
         liste_tabou.append(solution_courante)                                  
         
         print(f"Iteration {nb_iter}:")
-        print(f"  Current solution: {solution_courante}")
+        # print(f"  Current solution: {solution_courante}")
         print(f"  Current value: {valeur_contenu(solution_courante)}")
-        print(f"  Best global solution: {meilleure_globale}")
+        # print(f"  Best global solution: {meilleure_globale}")
         print(f"  Best global value: {valeur_meilleure_globale}")
                                                                                
     return meilleure_globale                                                   
