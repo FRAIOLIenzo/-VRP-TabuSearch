@@ -158,4 +158,4 @@ res = plt.plot(range(len(courants)), meilleurs_courants)
 plt.show()
 
 # 271 for 10
-# 1368 for 100
+# 1367 for 100
