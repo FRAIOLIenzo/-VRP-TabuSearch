@@ -2,13 +2,8 @@ import random
 import math
 from collections import deque
 from functools import lru_cache
-
-# DONE : faire valeur aléatoire pour représenter les coordonées des villes pour VRP
-# DONE : faire algo pour trouver distance entre toutes les villes 
-# TODO : faire path commun pour VRP
-# TODO : passer par toutes les villes avec même départ
-# TODO : changer les voisins aléatoirement pour avoir une distance plus courte 
-# TODO : faire les stat descriptive sur cette algo 
+import matplotlib.pyplot as plt
+import time
 
 random.seed(10)
 def generate_coordinates(nb_villes, x_max=100, y_max=100):
@@ -28,12 +23,14 @@ def calculate_distances(coordinates):
                 distances[(i, j)] = distance
     return distances
 
+
 def distances_to_matrix(distances, nb_villes):
     matrix = [[0] * nb_villes for _ in range(nb_villes)]
     for (i, j), distance in distances.items():
         matrix[i][j] = distance
     return matrix
 
+@lru_cache(maxsize=None)
 def generate_path(nb_villes, start_city):
     path = list(range(nb_villes))
     path.remove(start_city)
@@ -69,6 +66,21 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     valeur_meilleure = calculate_path_distance(solution_initiale, matrix)                       
     valeur_meilleure_globale = valeur_meilleure
 
+
+
+    # variables pour l'affichage
+    meilleure_trouvee = 0
+    meilleure_globale_trouvee = 0
+    
+    # liste des solutions courantes et des meilleures trouvées, pour afficher la trajectoire
+    # l'élément à la ième position correspond à l'itération i
+    courantes =\
+        deque(()) #SOLUTION
+    meilleures_courantes =\
+        deque(()) #SOLUTION
+    
+
+
     while (nb_iter < iter_max):                                                
         valeur_meilleure = float('inf')                                                  
                                                                                
@@ -78,16 +90,25 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
                                                                                
             # MaJ meilleure solution non taboue trouvée                        
             if valeur_voisin < valeur_meilleure and voisin not in liste_tabou: 
+                meilleure_trouvee += 1 
                 valeur_meilleure = valeur_voisin                               
                 meilleure = voisin                                             
                                                                                
         # on met à jour la meilleure solution rencontrée depuis le début       
-        if valeur_meilleure < valeur_meilleure_globale:                        
+        if valeur_meilleure < valeur_meilleure_globale:  
+            meilleure_globale_trouvee += 1                      
             meilleure_globale = meilleure                                      
             valeur_meilleure_globale = valeur_meilleure                        
-            nb_iter = 0                                                        
+            nb_iter = 0     
         else:                                                                  
-            nb_iter += 1                                                       
+            nb_iter += 1
+
+        meilleures_courantes.append(
+            valeur_meilleure_globale) #SOLUTION
+        courantes.append(
+                valeur_meilleure)     #SOLUTION
+
+                                                             
                                                                                
         # on passe au meilleur voisin non tabou trouvé                         
         solution_courante = meilleure                                          
@@ -95,42 +116,46 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
         # on met à jour la liste tabou                                         
         liste_tabou.append(solution_courante)                                  
         
-        print(f"Iteration {nb_iter}:")
+        # print(f"Iteration {nb_iter}:")
         # print(f"  Current solution: {solution_courante}")
-        print(f"  Current value: {calculate_path_distance(solution_courante, matrix)}")
+        # print(f"  Current value: {calculate_path_distance(solution_courante, matrix)}")
         # print(f"  Best global solution: {meilleure_globale}")
-        print(f"  Best global value: {valeur_meilleure_globale}")
+        # print(f"  Best global value: {valeur_meilleure_globale}")
                                                                                
-    return meilleure_globale     
+    return meilleure_globale, courantes, meilleures_courantes     
 
 
+start = time.process_time()
 # Main
-nb_villes = 10
+nb_villes = 100
 
 coordinates = generate_coordinates(nb_villes)
-print(f"coordinates : {coordinates}")
-
+# print(f"coordinates : {coordinates}")
 distances = calculate_distances(coordinates)
-print(f"distances : {distances}")
-print("--------------------")
+# print(f"distances : {distances}")
 distance_matrix = distances_to_matrix(distances, nb_villes)
-for row in distance_matrix:
-    print(" ".join(f"{dist:3}" for dist in row))
-print("--------------------")
-
+# for row in distance_matrix:
+#     print(" ".join(f"{dist:3}" for dist in row))
 path = generate_path(nb_villes, 0)
-print(f"path : {path}")
-
-total_distance = calculate_path_distance(path, distance_matrix)
-print(f"total_distance : {total_distance}")
-
-neighbors = generate_neighbors(path)
-print(f"neighbors : {neighbors}")
+# print(f"path : {path}")
 
 
 # Initialisation des paramètres
 taille_tabou = 10
-iter_max = 30
+iter_max = 50
 solution_initiale = path
-tabou = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
-print(f"tabou : {tabou}")
+tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
+tabou_distance = calculate_path_distance(tabou, distance_matrix)
+stop = time.process_time()
+# print(f"tabou : {tabou}")
+print(f"tabou_distance : {tabou_distance}")
+print("calculé en ", stop-start, 's')
+
+plt.xlabel("nb itérations", fontsize=16)
+plt.ylabel("valeur", fontsize=16)
+res = plt.plot(range(len(courants)), courants)
+res = plt.plot(range(len(courants)), meilleurs_courants)
+plt.show()
+
+# 271 for 10
+# 1368 for 100
