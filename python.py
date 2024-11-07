@@ -74,7 +74,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 
     while (nb_iter < iter_max):                                                
-        valeur_meilleure = 99999                                                  
+        valeur_meilleure = 9999999                                                  
                                                                                
         # on parcourt tous les voisins de la solution courante                 
         for voisin in generate_neighbors(solution_courante):                            
@@ -115,7 +115,8 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 start = time.process_time()
 # Main -----------------------------------------------------------------------------------
-nb_villes = 100
+print("Main")
+nb_villes = 50
 
 coordinates = generate_coordinates(nb_villes)
 # print(f"coordinates : {coordinates}")
@@ -141,9 +142,9 @@ print("calculé en ", stop-start, 's')
 
 plt.xlabel("nb itérations", fontsize=16)
 plt.ylabel("valeur", fontsize=16)
-plt.plot(range(len(courants)), courants)
-plt.plot(range(len(courants)), meilleurs_courants)
-
+plt.plot(range(len(courants)), courants, label='Solution courante')
+plt.plot(range(len(courants)), meilleurs_courants, label='Meilleure solution')
+plt.legend()
 
 plt.show()
 
