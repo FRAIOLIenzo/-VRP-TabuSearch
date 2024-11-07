@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpStatus, value
 import statistics
-
+from tqdm import tqdm
 
 
 
@@ -232,10 +232,10 @@ plt.show()
 
 # paramètres du test
 tabou_min = 1
-tabou_max = 200
+tabou_max = 100
 nb_villes = 10
 
-nb_test = 100
+nb_test = 150
 iter_max = 20
 
 # pour stocker les résultats
@@ -251,7 +251,7 @@ distances_dict = calculate_distances(coordinates)
 distance_matrix = distances_to_matrix(distances_dict, nb_villes)
 
 # boucle sur la taille de la liste tabou
-for taille_tabou in range(tabou_min, tabou_max):
+for taille_tabou in tqdm(range(tabou_min, tabou_max)):
     distances = deque(())
     for _ in range(nb_test):
 
