@@ -119,10 +119,10 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     return meilleure_globale, courantes, meilleures_courantes     
 
 
-start = time.process_time()
+
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 10
+nb_villes = 1000
 
 coordinates = generate_coordinates(nb_villes)
 # print(f"coordinates : {coordinates}")
@@ -137,15 +137,16 @@ distances = calculate_distances(coordinates)
 distance_matrix = distances_to_matrix(distances, nb_villes)
 # for row in distance_matrix:
 #     print(" ".join(f"{dist:3}" for dist in row))
+print("matrix")
 random.seed(9)
 path = generate_path(nb_villes, 0)
 random.seed()
 # print(f"path : {path}")
 
-
+start = time.process_time()
 # Initialisation des paramètres
-taille_tabou = 400
-iter_max = 400 
+taille_tabou = 10
+iter_max = 20 
 solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
 tabou_distance = calculate_path_distance(tabou, distance_matrix)
@@ -166,7 +167,7 @@ plt.show()
 #Pulp 190
 # 1367 for 100 1317
 #Pulp 566
-
+# 2483 for 200 !! 52 secondes !!
 
 #---------------------------------------------------PULP
 
@@ -227,53 +228,98 @@ plt.show()
 
 # print("valeur finale = " + str(val_max))
 
-#---------------------------------------------------------------Statistique
+#---------------------------------------------------------------Statistique Liste Tabou
 
 
-# paramètres du test
-tabou_min = 1
-tabou_max = 100
-nb_villes = 10
+# # paramètres du test
+# tabou_min = 1
+# tabou_max = 100
+# nb_villes = 10
 
-nb_test = 150
-iter_max = 20
+# nb_test = 100
+# iter_max = 20
 
-# pour stocker les résultats
-moyennes = []
-deviations = []
+# # pour stocker les résultats
+# moyennes = []
+# deviations = []
 
-random.seed(9)
+# random.seed(9)
 
 
-# génération aléatoire de l'instance 
-coordinates = generate_coordinates(nb_villes)
-distances_dict = calculate_distances(coordinates)
-distance_matrix = distances_to_matrix(distances_dict, nb_villes)
+# # génération aléatoire de l'instance 
+# coordinates = generate_coordinates(nb_villes)
+# distances_dict = calculate_distances(coordinates)
+# distance_matrix = distances_to_matrix(distances_dict, nb_villes)
 
-# boucle sur la taille de la liste tabou
-for taille_tabou in tqdm(range(tabou_min, tabou_max)):
-    distances = deque(())
-    for _ in range(nb_test):
+# # boucle sur la taille de la liste tabou
+# for taille_tabou in tqdm(range(tabou_min, tabou_max)):
+#     distances = deque(())
+#     for _ in range(nb_test):
 
-        
-        path = generate_path(nb_villes, 0)
-        solution, _, _ = recherche_tabou(path, taille_tabou, iter_max, distance_matrix)
-        val = calculate_path_distance(solution, distance_matrix)
-        distances.append(val)
+#         path = generate_path(nb_villes, 0)
+#         solution, _, _ = recherche_tabou(path, taille_tabou, iter_max, distance_matrix)
+#         val = calculate_path_distance(solution, distance_matrix)
+#         distances.append(val)
         
                                                             
-    moyennes.append(statistics.mean(distances))
-    deviations.append(statistics.stdev(distances))
+#     moyennes.append(statistics.mean(distances))
+#     deviations.append(statistics.stdev(distances))
 
-# affichage de la courbe de moyenne
-plt.plot(range(tabou_min, tabou_max), moyennes)
+# # affichage de la courbe de moyenne
+# plt.plot(range(tabou_min, tabou_max), moyennes)
 
-# affichage de la bande d'écart-type
-plt.fill_between(range(tabou_min, tabou_max),
-                 [m - d for m, d in zip(moyennes, deviations)],
-                 [m + d for m, d in zip(moyennes, deviations)],
-                 alpha=.1)
-plt.xlabel("taille de la liste tabou")
-plt.ylabel("distance du parcours")
-plt.title("Impact de la taille de la liste tabou sur la qualité des solutions")
-plt.show()
+# # affichage de la bande d'écart-type
+# plt.fill_between(range(tabou_min, tabou_max),
+#                  [m - d for m, d in zip(moyennes, deviations)],
+#                  [m + d for m, d in zip(moyennes, deviations)],
+#                  alpha=.1)
+# plt.xlabel("taille de la liste tabou")
+# plt.ylabel("distance du parcours")
+# plt.title("Impact de la taille de la liste tabou sur la qualité des solutions")
+# plt.show()
+
+#---------------------------------------------------------------Statistique iter_max
+
+# # paramètres du test
+# iter_min = 1
+# iter_max = 100
+# nb_villes = 10
+
+# nb_test = 100
+# taille_tabou = 20
+
+# # pour stocker les résultats
+# moyennes = []
+# deviations = []
+
+# random.seed(9)
+
+# # génération aléatoire de l'instance 
+# coordinates = generate_coordinates(nb_villes)
+# distances_dict = calculate_distances(coordinates)
+# distance_matrix = distances_to_matrix(distances_dict, nb_villes)
+
+# # boucle sur le nombre d'itérations max
+# for iterations in tqdm(range(iter_min, iter_max)):
+#     distances = deque(())
+#     for _ in range(nb_test):
+#         path = generate_path(nb_villes, 0)
+#         solution, _, _ = recherche_tabou(path, taille_tabou, iterations, distance_matrix)
+#         val = calculate_path_distance(solution, distance_matrix)
+#         distances.append(val)
+                                                            
+#     moyennes.append(statistics.mean(distances))
+#     deviations.append(statistics.stdev(distances))
+
+# # affichage de la courbe de moyenne
+# plt.plot(range(iter_min, iter_max), moyennes)
+
+# # affichage de la bande d'écart-type
+# plt.fill_between(range(iter_min, iter_max),
+#                  [m - d for m, d in zip(moyennes, deviations)],
+#                  [m + d for m, d in zip(moyennes, deviations)],
+#                  alpha=.1)
+# plt.xlabel("nombre d'itérations maximum")
+# plt.ylabel("distance du parcours") 
+# plt.title("Impact du nombre d'itérations sur la qualité des solutions")
+# plt.show()
