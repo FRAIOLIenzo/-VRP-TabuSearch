@@ -77,13 +77,15 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     courantes = deque(()) #SOLUTION
     meilleures_courantes = deque(()) #SOLUTION
     
-
+    # print(f"Initial solution: {solution_initiale}")
+    # print(calculate_path_distance(solution_initiale, matrix))
 
     while (nb_iter < iter_max):                                                
-        valeur_meilleure = 9999999                                                  
+        valeur_meilleure = float('inf')                                                 
                                                                                
         # on parcourt tous les voisins de la solution courante                 
-        for voisin in generate_neighbors(solution_courante):                            
+        for voisin in generate_neighbors(solution_courante):  
+            # print("nb_voisin : ", len(generate_neighbors(solution_courante)))                          
             valeur_voisin = calculate_path_distance(voisin, matrix)                             
                                                                                
             # MaJ meilleure solution non taboue trouvée                        
@@ -122,7 +124,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 1000
+nb_villes = 100
 
 coordinates = generate_coordinates(nb_villes)
 # print(f"coordinates : {coordinates}")
@@ -137,7 +139,7 @@ distances = calculate_distances(coordinates)
 distance_matrix = distances_to_matrix(distances, nb_villes)
 # for row in distance_matrix:
 #     print(" ".join(f"{dist:3}" for dist in row))
-print("matrix")
+# print("matrix")
 random.seed(9)
 path = generate_path(nb_villes, 0)
 random.seed()
