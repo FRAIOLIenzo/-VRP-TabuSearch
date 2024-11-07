@@ -1,19 +1,20 @@
 import random
 import math
 from collections import deque
-from functools import lru_cache
 import matplotlib.pyplot as plt
 import time
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpStatus, value
 
-random.seed(9)
+
 
 def generate_coordinates(nb_villes, x_max=100, y_max=100):
+    random.seed(9)
     coordinates = {}
     for i in range(nb_villes):
         x = random.randint(1, x_max)
         y = random.randint(1, y_max)
         coordinates[i] = (x, y)
+    random.seed()
     return coordinates
 
 def calculate_distances(coordinates):
@@ -32,7 +33,6 @@ def distances_to_matrix(distances, nb_villes):
         matrix[i][j] = distance
     return matrix
 
-@lru_cache(maxsize=None)
 def generate_path(nb_villes, start_city):
     path = list(range(nb_villes))
     path.remove(start_city)
@@ -135,13 +135,15 @@ distances = calculate_distances(coordinates)
 distance_matrix = distances_to_matrix(distances, nb_villes)
 # for row in distance_matrix:
 #     print(" ".join(f"{dist:3}" for dist in row))
+random.seed(9)
 path = generate_path(nb_villes, 0)
-print(f"path : {path}")
+random.seed()
+# print(f"path : {path}")
 
 
 # Initialisation des paramètres
-taille_tabou = 60
-iter_max = 100
+taille_tabou = 20
+iter_max = 50
 solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
 tabou_distance = calculate_path_distance(tabou, distance_matrix)
@@ -192,3 +194,30 @@ borne = borne_inferieure()
 if borne is not None:
     print("borne inférieure : ", borne)
 print("valeur de la solution tabou:", str(tabou_distance))
+
+#-------------------------------------------------------------------MULTI-START
+
+taille_tabou = 60
+iter_max = 10
+
+# multi-start de 500 itérations
+val_max = float('inf')
+sol_max = None
+
+sac = solution_initiale
+for _ in range(10):
+
+    print("sac = " + str(sac))
+    print("valeur initiale = " + str(calculate_path_distance(sac, distance_matrix)))
+
+    sol_courante, _, _ = recherche_tabou(sac, taille_tabou, iter_max, distance_matrix)
+    val_courante = calculate_path_distance(sol_courante, distance_matrix)
+    print("valeur courante = " + str(val_courante))
+    
+    if val_courante < val_max:
+        print("nouveau max = " + str(val_courante))
+        val_max = val_courante
+        sol_max = sol_courante
+    sac = generate_path(nb_villes, 0)
+
+print("valeur finale = " + str(val_max))
