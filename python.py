@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import time
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpStatus, value
 
-random.seed(10)
+random.seed(9)
+
 def generate_coordinates(nb_villes, x_max=100, y_max=100):
     coordinates = {}
     for i in range(nb_villes):
@@ -35,14 +36,16 @@ def distances_to_matrix(distances, nb_villes):
 def generate_path(nb_villes, start_city):
     path = list(range(nb_villes))
     path.remove(start_city)
+    random.shuffle(path)
     path.insert(0, start_city)
+    path.append(start_city)  
     return path
 
 def calculate_path_distance(path, distance_matrix):
     total_distance = 0
     for i in range(len(path) - 1):
         total_distance += distance_matrix[path[i]][path[i + 1]]
-    total_distance += distance_matrix[path[-1]][path[0]]  # Return to start
+    total_distance += distance_matrix[path[-1]][path[0]] 
     return total_distance
 
 def generate_neighbors(path):
@@ -121,11 +124,11 @@ nb_villes = 100
 
 coordinates = generate_coordinates(nb_villes)
 # print(f"coordinates : {coordinates}")
-# plt.scatter(*zip(*coordinates.values()))
-# plt.title("City Coordinates")
-# plt.xlabel("X Coordinate")
-# plt.ylabel("Y Coordinate")
-# plt.show()
+plt.scatter(*zip(*coordinates.values()))
+plt.title("City Coordinates")
+plt.xlabel("X Coordinate")
+plt.ylabel("Y Coordinate")
+plt.show()
 
 distances = calculate_distances(coordinates)
 
@@ -133,12 +136,12 @@ distance_matrix = distances_to_matrix(distances, nb_villes)
 # for row in distance_matrix:
 #     print(" ".join(f"{dist:3}" for dist in row))
 path = generate_path(nb_villes, 0)
-
+print(f"path : {path}")
 
 
 # Initialisation des paramètres
-taille_tabou = 10
-iter_max = 10
+taille_tabou = 60
+iter_max = 100
 solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
 tabou_distance = calculate_path_distance(tabou, distance_matrix)
@@ -177,6 +180,10 @@ def borne_inferieure():
     for i in villes:
         prob += lpSum(x[i,j] for j in villes if i!=j) == 1  # chaque ville doit être quittée une fois
         prob += lpSum(x[j,i] for j in villes if i!=j) == 1  # chaque ville doit être visitée une fois
+
+    # contrainte additionnelle: revenir à la ville de départ
+    prob += lpSum(x[0,j] for j in villes if j != 0) == 1  # partir de la ville de départ
+    prob += lpSum(x[j,0] for j in villes if j != 0) == 1  # revenir à la ville de départ
 
     prob.solve()
     return value(prob.objective) if (LpStatus[prob.status] == "Optimal") else None
