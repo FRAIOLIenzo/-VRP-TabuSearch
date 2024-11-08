@@ -8,7 +8,7 @@ import statistics
 from tqdm import tqdm
 
 
-
+#---------------------------------------------------------------Fonctions----------------------------------------------------------------
 def generate_coordinates(nb_villes, x_max=100, y_max=100, min_distance=5):
     random.seed(9)
     coordinates = {}
@@ -74,16 +74,13 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     
     courantes = deque(()) #SOLUTION
     meilleures_courantes = deque(()) #SOLUTION
-    
-    # print(f"Initial solution: {solution_initiale}")
-    # print(calculate_path_distance(solution_initiale, matrix))
-
+    print("nb_voisin : ", len(generate_neighbors(solution_courante))) 
     while (nb_iter < iter_max):                                                
         valeur_meilleure = float('inf')                                                 
                                                                                
-        # on parcourt tous les voisins de la solution courante                 
+        # on parcourt tous les voisins de la solution courante                
         for voisin in generate_neighbors(solution_courante):  
-            # print("nb_voisin : ", len(generate_neighbors(solution_courante)))                          
+                                      
             valeur_voisin = calculate_path_distance(voisin, matrix)                             
                                                                                
             # MaJ meilleure solution non taboue trouvée                        
@@ -195,6 +192,8 @@ def solve_vrp_with_pulp(distance_matrix):
     else:
         return None, None
 
+
+#---------------------------------------------------------------Plotting----------------------------------------------------------------
 def plot_tabu_search_path(coordinates, tabou, tabou_distance, subplot_position):
     plt.subplot(*subplot_position)
     plt.scatter(*zip(*coordinates.values()), c='blue', label="Cities")
@@ -232,6 +231,15 @@ def plot_exact_solution_pulp(coordinates, pulp_path, pulp_distance, tabou_distan
     ratio = tabou_distance / pulp_distance if pulp_distance != 0 else float('inf')
     plt.title(f"Exact Solution PuLP: {pulp_distance}, Ratio: {ratio:.2f}")
 
+def plot_vrp_solutions( tabou, tabou_distance, courants, meilleurs_courants, nb_villes):
+    plt.figure(figsize=(15, 10))
+    plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
+    plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
+
+    # Add overall title
+    plt.suptitle(f"VRP Solutions for {nb_villes} cities")
+    plt.tight_layout()
+    plt.show()
 def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test):
     plt.figure(figsize=(15, 10))
     plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
@@ -242,7 +250,6 @@ def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meill
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
     plt.tight_layout()
     plt.show()
-
 def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test):
     plt.figure(figsize=(15, 10))
 
@@ -256,10 +263,10 @@ def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleu
     plt.tight_layout()
     plt.show()
 
-# Main -----------------------------------------------------------------------------------
+#---------------------------------------------------------------Main----------------------------------------------------------------
 print("Main")
-nb_villes = 50
-# 398 pour 20 villes
+nb_villes = 200
+
 coordinates = generate_coordinates(nb_villes)
 distances = calculate_distances(coordinates)
 distance_matrix = distances_to_matrix(distances, nb_villes)
@@ -269,19 +276,20 @@ random.seed()
 start = time.process_time()
 
 # Initialisation des paramètres
-taille_tabou = 400
-iter_max = 400 
+taille_tabou = 30
+iter_max = 50 
 solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
 tabou_distance = calculate_path_distance(tabou, distance_matrix)
 stop = time.process_time()
 print("calculé en ", stop-start, 's')
-
+print("Distance : ", tabou_distance)
+plot_vrp_solutions(tabou, tabou_distance, courants, meilleurs_courants, nb_villes)
 
 #Run multi start
-nb_test = 30
-sol_max, val_max, nb_test = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
-plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test)
+# nb_test = 30
+# sol_max, val_max, nb_test = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
+# plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test)
 
 # # Run the exact solver
 # pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
