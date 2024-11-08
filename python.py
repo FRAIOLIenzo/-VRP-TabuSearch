@@ -240,7 +240,7 @@ def plot_solution_evolution(courants, meilleurs_courants, subplot_position):
     plt.xlabel("Iteration")
     plt.ylabel("Solution Value")
     plt.legend()
-def plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, subplot_position):
+def plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, tabou_distance, subplot_position):
     plt.subplot(*subplot_position)
     plt.scatter(*zip(*coordinates.values()), c='blue', label="Cities")
     plt.scatter(*coordinates[sol_max[0]], c='green', label="Start City")
@@ -248,7 +248,7 @@ def plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, subpl
         city1 = coordinates[sol_max[i]]
         city2 = coordinates[sol_max[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Multi-start Best Solution: {val_max}, after {nb_test} attempts")
+    plt.title(f"Multi-start Best Solution: {val_max}, after {nb_test} attempts, Inprovement: {((tabou_distance - val_max) / tabou_distance) * 100:.2f}%")
 def plot_solution_statistics(solutions, best_solutions, subplot_position):
     plt.subplot(*subplot_position)
     plt.plot(range(len(solutions)), solutions, label='Current Solutions', color='blue')
@@ -281,7 +281,7 @@ def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meill
     plt.figure(figsize=(15, 10))
     plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
     plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
-    plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, (2, 2, 3))
+    plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, tabou_distance, (2, 2, 3))
     plot_solution_statistics(solutions, best_solutions, (2, 2, 4))
 
     # Add overall title
