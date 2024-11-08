@@ -123,16 +123,23 @@ def multi_start(nb_villes, solution_initiale, distance_matrix, nb_test):
     sol_max = None
 
     sac = solution_initiale
+    solutions = []
+    best_solutions = []
+
     for _ in tqdm(range(nb_test)):
         sol_courante, _, _ = recherche_tabou(sac, taille_tabou, iter_max, distance_matrix)
         val_courante = calculate_path_distance(sol_courante, distance_matrix)
         
+        solutions.append(val_courante)
+        
         if val_courante < val_max:
             val_max = val_courante
             sol_max = sol_courante
+        
+        best_solutions.append(val_max)
         sac = generate_path(nb_villes, 0)
 
-    return sol_max, val_max, nb_test
+    return sol_max, val_max, nb_test, solutions, best_solutions
 
 def solve_vrp_with_pulp(distance_matrix):
     num_cities = len(distance_matrix)
@@ -219,7 +226,15 @@ def plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, subpl
         city2 = coordinates[sol_max[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
     plt.title(f"Multi-start Best Solution: {val_max}, after {nb_test} attempts")
-def plot_exact_solution_pulp(coordinates, pulp_path, pulp_distance, tabou_distance, subplot_position=(2, 2, 3)):
+def plot_solution_statistics(solutions, best_solutions, subplot_position):
+    plt.subplot(*subplot_position)
+    plt.plot(range(len(solutions)), solutions, label='Current Solutions', color='blue')
+    plt.plot(range(len(best_solutions)), best_solutions, label='Best Solutions', color='orange')
+    plt.title("Solution Evolution Over Multiple Starts")
+    plt.xlabel("Iteration")
+    plt.ylabel("Solution Value")
+    plt.legend()
+def plot_exact_solution_pulp(coordinates, pulp_path, pulp_distance, tabou_distance, subplot_position):
     plt.subplot(*subplot_position)
     plt.scatter(*zip(*coordinates.values()), c='blue', label="Cities")
     plt.scatter(*coordinates[pulp_path[0]], c='green', label="Start City")
@@ -239,11 +254,12 @@ def plot_vrp_solutions( tabou, tabou_distance, courants, meilleurs_courants, nb_
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
     plt.tight_layout()
     plt.show()
-def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test):
+def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions):
     plt.figure(figsize=(15, 10))
     plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
     plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
     plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, (2, 2, 3))
+    plot_solution_statistics(solutions, best_solutions, (2, 2, 4))
 
     # Add overall title
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
@@ -313,7 +329,7 @@ def test_tabou_search_impact(tabou_min, tabou_max, nb_villes, nb_test, iter_max)
 
 #---------------------------------------------------------------Main----------------------------------------------------------------
 print("Main")
-nb_villes = 10
+nb_villes = 20
 
 coordinates = generate_coordinates(nb_villes)
 distances = calculate_distances(coordinates)
@@ -324,7 +340,7 @@ random.seed()
 start = time.process_time()
 
 # Initialisation des paramètres
-taille_tabou = 30
+taille_tabou = 140
 iter_max = 50 
 solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
@@ -332,19 +348,26 @@ tabou_distance = calculate_path_distance(tabou, distance_matrix)
 stop = time.process_time()
 print("calculé en ", stop-start, 's')
 print("Distance : ", tabou_distance)
-plot_vrp_solutions(tabou, tabou_distance, courants, meilleurs_courants, nb_villes)
+# plot_vrp_solutions(tabou, tabou_distance, courants, meilleurs_courants, nb_villes)
 
-tabou_min = 1
-tabou_max = 400
-nb_villes = 20
-nb_test = 100
-iter_max = 20
-test_tabou_search_impact(tabou_min, tabou_max, nb_villes, nb_test, iter_max)
-#Run multi start
-# nb_test = 30
-# sol_max, val_max, nb_test = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
-# plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test)
+# Run multi start
+nb_test = 30
+sol_max, val_max, nb_test, solutions, best_solutions = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
+plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
+
+print("solutions : ", solutions)
+print("best_solutions : ", best_solutions)
+
+
 
 # # Run the exact solver
 # pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
 # plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test)
+
+#Run Test Tabou Search Impact
+# tabou_min = 1
+# tabou_max = 200
+# nb_villes = 20
+# nb_test = 100
+# iter_max = 20
+# test_tabou_search_impact(tabou_min, tabou_max, nb_villes, nb_test, iter_max)
