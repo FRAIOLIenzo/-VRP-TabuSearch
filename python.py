@@ -9,13 +9,13 @@ from tqdm import tqdm
 
 
 
-def generate_coordinates(nb_villes, x_max=100, y_max=100):
+def generate_coordinates(nb_villes, x_max=100, y_max=100, min_distance=5):
     random.seed(9)
     coordinates = {}
     while len(coordinates) < nb_villes:
         x = random.randint(1, x_max)
         y = random.randint(1, y_max)
-        if (x, y) not in coordinates.values():
+        if all(math.sqrt((x - cx) ** 2 + (y - cy) ** 2) >= min_distance for cx, cy in coordinates.values()):
             coordinates[len(coordinates)] = (x, y)
     random.seed()
     return coordinates
@@ -53,11 +53,11 @@ def calculate_path_distance(path, distance_matrix):
 
 def generate_neighbors(path):
     neighbors = []
-    for i in range(1, len(path) - 1):
-        for j in range(i + 1, len(path)):
-            neighbor = path[:]
-            neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
-            neighbors.append(neighbor)
+    from itertools import combinations
+    for i, j in combinations(range(1, len(path) - 1), 2):
+            path[i], path[j] = path[j], path[i]
+            neighbors.append(path[:])
+            path[i], path[j] = path[j], path[i]
     return neighbors
 
 def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
@@ -125,7 +125,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 20
+nb_villes = 100
 
 coordinates = generate_coordinates(nb_villes)
 
@@ -152,16 +152,18 @@ solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
 tabou_distance = calculate_path_distance(tabou, distance_matrix)
 stop = time.process_time()
-# print(f"tabou : {tabou}")
+print(f"tabou : {tabou}")
+
 
 
 # Plot the cities and the path found by the Tabu Search
 plt.scatter(*zip(*coordinates.values()), c='blue')
+plt.scatter(*coordinates[tabou[0]], c='green')  # Make the start city green
 for i in range(len(tabou) - 1):
     city1 = coordinates[tabou[i]]
     city2 = coordinates[tabou[i + 1]]
     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-plt.title(f"Path found by Tabu Search {tabou_distance}")
+plt.title(f"Path found by Tabu Search: {tabou_distance} for {nb_villes} cities")
 plt.xlabel("X Coordinate")
 plt.ylabel("Y Coordinate")
 plt.show()
@@ -169,6 +171,7 @@ print(f"tabou_distance : {tabou_distance}")
 print("calculé en ", stop-start, 's')
 
 # Plot the evolution of the current solution and the best solution found
+plt.title(f"Best Tabu Value: {tabou_distance} for {nb_villes} cities")
 plt.xlabel("nb itérations", fontsize=16)
 plt.ylabel("valeur", fontsize=16)
 plt.plot(range(len(courants)), courants, label='Solution courante')
