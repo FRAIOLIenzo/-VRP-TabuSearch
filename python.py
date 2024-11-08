@@ -123,7 +123,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 20
+nb_villes = 50
 # 398 pour 20 villes
 coordinates = generate_coordinates(nb_villes)
 
@@ -148,126 +148,94 @@ print(f"tabou : {tabou}")
 print(f"tabou_distance : {tabou_distance}")
 print("calculé en ", stop-start, 's')
 
-#---------------------------------------------------PLOT 3
-# plt.figure(figsize=(15, 10))
-
-# # Plot 1: Cities and Tabu Search path
-# plt.subplot(2, 2, 1)
-# plt.scatter(*zip(*coordinates.values()), c='blue')
-# plt.scatter(*coordinates[tabou[0]], c='green')
-# for i in range(len(tabou) - 1):
-#     city1 = coordinates[tabou[i]]
-#     city2 = coordinates[tabou[i + 1]]
-#     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-# plt.title(f"Tabu Search Path: {tabou_distance}")
-
-# # Plot 2: Solution evolution
-# plt.subplot(2, 2, 2)
-# plt.plot(range(len(courants)), courants, label='Current solution')
-# plt.plot(range(len(courants)), meilleurs_courants, label='Best solution')
-# plt.title("Solution Evolution")
-# plt.legend()
-
-# # Add overall title
-# plt.suptitle(f"VRP Solutions for {nb_villes} cities")
-# plt.tight_layout()
-
-# plt.show()
-
 #---------------------------------------------------PULP
 
-def solve_vrp_with_pulp(distance_matrix):
-    num_cities = len(distance_matrix)
+# def solve_vrp_with_pulp(distance_matrix):
+#     num_cities = len(distance_matrix)
 
-    # Create a PuLP problem instance for minimization
-    prob = LpProblem("VRP", LpMinimize)
+#     # Create a PuLP problem instance for minimization
+#     prob = LpProblem("VRP", LpMinimize)
 
-    # Binary variables: x[i][j] == 1 if path i -> j is chosen
-    x = LpVariable.dicts("x", ((i, j) for i in range(num_cities) for j in range(num_cities)), cat="Binary")
+#     # Binary variables: x[i][j] == 1 if path i -> j is chosen
+#     x = LpVariable.dicts("x", ((i, j) for i in range(num_cities) for j in range(num_cities)), cat="Binary")
 
-    # Additional variables to prevent subtours (MTZ formulation)
-    u = LpVariable.dicts("u", (i for i in range(num_cities)), lowBound=0, cat="Continuous")
+#     # Additional variables to prevent subtours (MTZ formulation)
+#     u = LpVariable.dicts("u", (i for i in range(num_cities)), lowBound=0, cat="Continuous")
 
-    # Objective: Minimize the total distance
-    prob += lpSum(distance_matrix[i][j] * x[i, j] for i in range(num_cities) for j in range(num_cities))
+#     # Objective: Minimize the total distance
+#     prob += lpSum(distance_matrix[i][j] * x[i, j] for i in range(num_cities) for j in range(num_cities))
 
-    # Constraints
-    # 1. Each city must be entered exactly once
-    for j in range(num_cities):
-        prob += lpSum(x[i, j] for i in range(num_cities) if i != j) == 1
+#     # Constraints
+#     # 1. Each city must be entered exactly once
+#     for j in range(num_cities):
+#         prob += lpSum(x[i, j] for i in range(num_cities) if i != j) == 1
 
-    # 2. Each city must be left exactly once
-    for i in range(num_cities):
-        prob += lpSum(x[i, j] for j in range(num_cities) if i != j) == 1
+#     # 2. Each city must be left exactly once
+#     for i in range(num_cities):
+#         prob += lpSum(x[i, j] for j in range(num_cities) if i != j) == 1
 
-    # 3. Subtour elimination constraints (MTZ formulation)
-    for i in range(1, num_cities):
-        for j in range(1, num_cities):
-            if i != j:
-                prob += u[i] - u[j] + num_cities * x[i, j] <= num_cities - 1
+#     # 3. Subtour elimination constraints (MTZ formulation)
+#     for i in range(1, num_cities):
+#         for j in range(1, num_cities):
+#             if i != j:
+#                 prob += u[i] - u[j] + num_cities * x[i, j] <= num_cities - 1
 
-    # Solve the problem
-    prob.solve()
+#     # Solve the problem
+#     prob.solve()
 
-    # Retrieve the optimal path
-    path = []
-    if LpStatus[prob.status] == "Optimal":
-        # Find the path by tracing x[i][j] == 1
-        start = 0
-        visited = set([start])
-        path.append(start)
+#     # Retrieve the optimal path
+#     path = []
+#     if LpStatus[prob.status] == "Optimal":
+#         # Find the path by tracing x[i][j] == 1
+#         start = 0
+#         visited = set([start])
+#         path.append(start)
         
-        while len(visited) < num_cities:
-            for j in range(num_cities):
-                if value(x[start, j]) == 1:
-                    path.append(j)
-                    visited.add(j)
-                    start = j
-                    break
-        # Return to starting point to complete the cycle
-        path.append(0)
+#         while len(visited) < num_cities:
+#             for j in range(num_cities):
+#                 if value(x[start, j]) == 1:
+#                     path.append(j)
+#                     visited.add(j)
+#                     start = j
+#                     break
+#         # Return to starting point to complete the cycle
+#         path.append(0)
         
-        # Total distance
-        total_distance = value(prob.objective)
-        return path, total_distance
-    else:
-        return None, None
+#         # Total distance
+#         total_distance = value(prob.objective)
+#         return path, total_distance
+#     else:
+#         return None, None
 
-# Run the exact solver
-pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
-if pulp_path:
-    print(f"Exact solution path: {pulp_path}")
-    print(f"Exact solution distance: {pulp_distance}")
-    print(f"Tabu/Exact ratio: {tabou_distance/pulp_distance:.2f}")
+# # Run the exact solver
+# pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
+# if pulp_path:
+#     print(f"Exact solution path: {pulp_path}")
+#     print(f"Exact solution distance: {pulp_distance}")
+#     print(f"Tabu/Exact ratio: {tabou_distance/pulp_distance:.2f}")
 
 #-------------------------------------------------------------------MULTI-START
 
-taille_tabou = 400
-iter_max = 400
+taille_tabou = 30
+iter_max = 50
 
-# multi-start de 500 itérations
+# multi-start de n itérations
 val_max = float('inf')
 sol_max = None
 
 sac = solution_initiale
-for _ in range(30):
-
-    print("sac = " + str(sac))
-    print("valeur initiale = " + str(calculate_path_distance(sac, distance_matrix)))
-
+for _ in tqdm(range(30)):
     sol_courante, _, _ = recherche_tabou(sac, taille_tabou, iter_max, distance_matrix)
     val_courante = calculate_path_distance(sol_courante, distance_matrix)
-    print("valeur courante = " + str(val_courante))
     
     if val_courante < val_max:
-        print("nouveau max = " + str(val_courante))
         val_max = val_courante
         sol_max = sol_courante
     sac = generate_path(nb_villes, 0)
 
 print("valeur finale = " + str(val_max))
 
-# #---------------------------------------------------PLOT 3
+#---------------------------------------------------PLOT 
 plt.figure(figsize=(15, 10))
 
 # Plot 1: Cities and Tabu Search path
@@ -287,19 +255,8 @@ plt.plot(range(len(courants)), meilleurs_courants, label='Best solution')
 plt.title("Solution Evolution")
 plt.legend()
 
-# Plot 3: Exact solution (PuLP)
-plt.subplot(2, 2, 3)
-plt.scatter(*zip(*coordinates.values()), c='blue')
-plt.scatter(*coordinates[pulp_path[0]], c='green')
-for i in range(len(pulp_path) - 1):
-    city1 = coordinates[pulp_path[i]]
-    city2 = coordinates[pulp_path[i + 1]]
-    plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-plt.title(f"Exact Solution Pulp: {pulp_distance}, Ratio: {tabou_distance/pulp_distance:.2f}")
-
-
 # Plot 4: Multi start best solution
-plt.subplot(2, 2, 4)
+plt.subplot(2, 2, 3)
 
 plt.scatter(*zip(*coordinates.values()), c='blue')
 plt.scatter(*coordinates[sol_max[0]], c='green')
@@ -309,15 +266,62 @@ for i in range(len(sol_max) - 1):
     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
 plt.title(f"Multi-start Best Solution: {val_max}")
 
+
 # Add overall title
 plt.suptitle(f"VRP Solutions for {nb_villes} cities")
 plt.tight_layout()
 
 plt.show()
 
+#---------------------------------------------------PLOT ALL
+# plt.figure(figsize=(15, 10))
+
+# # Plot 1: Cities and Tabu Search path
+# plt.subplot(2, 2, 1)
+# plt.scatter(*zip(*coordinates.values()), c='blue')
+# plt.scatter(*coordinates[tabou[0]], c='green')
+# for i in range(len(tabou) - 1):
+#     city1 = coordinates[tabou[i]]
+#     city2 = coordinates[tabou[i + 1]]
+#     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+# plt.title(f"Tabu Search Path: {tabou_distance}")
+
+# # Plot 2: Solution evolution
+# plt.subplot(2, 2, 2)
+# plt.plot(range(len(courants)), courants, label='Current solution')
+# plt.plot(range(len(courants)), meilleurs_courants, label='Best solution')
+# plt.title("Solution Evolution")
+# plt.legend()
+
+# # Plot 3: Exact solution (PuLP)
+# plt.subplot(2, 2, 3)
+# plt.scatter(*zip(*coordinates.values()), c='blue')
+# plt.scatter(*coordinates[pulp_path[0]], c='green')
+# for i in range(len(pulp_path) - 1):
+#     city1 = coordinates[pulp_path[i]]
+#     city2 = coordinates[pulp_path[i + 1]]
+#     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+# plt.title(f"Exact Solution Pulp: {pulp_distance}, Ratio: {tabou_distance/pulp_distance:.2f}")
+
+
+# # Plot 4: Multi start best solution
+# plt.subplot(2, 2, 4)
+
+# plt.scatter(*zip(*coordinates.values()), c='blue')
+# plt.scatter(*coordinates[sol_max[0]], c='green')
+# for i in range(len(sol_max) - 1):
+#     city1 = coordinates[sol_max[i]]
+#     city2 = coordinates[sol_max[i + 1]]
+#     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+# plt.title(f"Multi-start Best Solution: {val_max}")
+
+# # Add overall title
+# plt.suptitle(f"VRP Solutions for {nb_villes} cities")
+# plt.tight_layout()
+
+# plt.show()
+
 #---------------------------------------------------------------Statistique Liste Tabou
-
-
 # # paramètres du test
 # tabou_min = 1
 # tabou_max = 100
