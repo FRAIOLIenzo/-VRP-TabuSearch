@@ -120,7 +120,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     return meilleure_globale, courantes, meilleures_courantes     
 
 #-------------------------------------------------------------------MULTI-START
-def multi_start(nb_villes, solution_initiale, distance_matrix):
+def multi_start(nb_villes, solution_initiale, distance_matrix, nb_test):
     taille_tabou = 30
     iter_max = 50
 
@@ -129,7 +129,7 @@ def multi_start(nb_villes, solution_initiale, distance_matrix):
     sol_max = None
 
     sac = solution_initiale
-    for _ in tqdm(range(30)):
+    for _ in tqdm(range(nb_test)):
         sol_courante, _, _ = recherche_tabou(sac, taille_tabou, iter_max, distance_matrix)
         val_courante = calculate_path_distance(sol_courante, distance_matrix)
         
@@ -138,7 +138,7 @@ def multi_start(nb_villes, solution_initiale, distance_matrix):
             sol_max = sol_courante
         sac = generate_path(nb_villes, 0)
 
-    return sol_max, val_max
+    return sol_max, val_max, nb_test
 
 #---------------------------------------------------PULP
 
@@ -201,7 +201,7 @@ def solve_vrp_with_pulp(distance_matrix):
 
 
 #---------------------------------------------------PLOT 
-def plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes):
+def plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test):
     plt.figure(figsize=(15, 10))
 
     # Plot 1: Cities and Tabu Search path
@@ -229,7 +229,7 @@ def plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_c
         city1 = coordinates[sol_max[i]]
         city2 = coordinates[sol_max[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Multi-start Best Solution: {val_max}")
+    plt.title(f"Multi-start Best Solution: {val_max}, en {nb_test} essais")
 
     # Add overall title
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
@@ -237,7 +237,7 @@ def plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_c
 
     plt.show()
 
-def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes):
+def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test):
     plt.figure(figsize=(15, 10))
 
     # Plot 1: Cities and Tabu Search path
@@ -275,7 +275,7 @@ def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleu
         city1 = coordinates[sol_max[i]]
         city2 = coordinates[sol_max[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Multi-start Best Solution: {val_max}")
+    plt.title(f"Multi-start Best Solution: {val_max}, Ratio: {val_max/pulp_distance:.2f}, en {nb_test} essais")
 
     # Add overall title
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
@@ -304,12 +304,13 @@ tabou_distance = calculate_path_distance(tabou, distance_matrix)
 stop = time.process_time()
 print("calculé en ", stop-start, 's')
 
-sol_max, val_max = multi_start(nb_villes, solution_initiale, distance_matrix)
-# plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes)
+nb_test = 30
+sol_max, val_max, nb_test = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
+# plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test)
 
 # Run the exact solver
 pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
-plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes)
+plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test)
 
 
 #---------------------------------------------------------------Statistique Liste Tabou
