@@ -1,3 +1,15 @@
+
+# __/\\\\\\\\\\\\\\\_        _____/\\\\\\\\\____        __/\\\\\\\\\\\\\___        __/\\\________/\\\_        
+#  _\///////\\\/////__        ___/\\\\\\\\\\\\\__        _\/\\\/////////\\\_        _\/\\\_______\/\\\_       
+#   _______\/\\\_______        __/\\\/////////\\\_        _\/\\\_______\/\\\_        _\/\\\_______\/\\\_      
+#    _______\/\\\_______        _\/\\\_______\/\\\_        _\/\\\\\\\\\\\\\\__        _\/\\\_______\/\\\_     
+#     _______\/\\\_______        _\/\\\\\\\\\\\\\\\_        _\/\\\/////////\\\_        _\/\\\_______\/\\\_    
+#      _______\/\\\_______        _\/\\\/////////\\\_        _\/\\\_______\/\\\_        _\/\\\_______\/\\\_   
+#       _______\/\\\_______        _\/\\\_______\/\\\_        _\/\\\_______\/\\\_        _\//\\\______/\\\__  
+#        _______\/\\\_______        _\/\\\_______\/\\\_        _\/\\\\\\\\\\\\\/__        __\///\\\\\\\\\/___ 
+#         _______\///________        _\///________\///__        _\/////////////____        ____\/////////_____
+
+
 import random
 import math
 from collections import deque
@@ -7,6 +19,7 @@ from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpStatus, value
 import statistics
 from tqdm import tqdm
 from itertools import combinations
+from geopy.distance import geodesic
 
 #---------------------------------------------------------------Fonctions----------------------------------------------------------------
 def generate_coordinates(nb_villes, x_max=100, y_max=100, min_distance=5):
@@ -26,6 +39,15 @@ def calculate_distances(coordinates):
         for j, (x2, y2) in coordinates.items():
             if i != j:
                 distance = round(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
+                distances[(i, j)] = distance
+    return distances
+
+def calculate_real_distances(coordinates):
+    distances = {}
+    for i, (x1, y1) in coordinates.items():
+        for j, (x2, y2) in coordinates.items():
+            if i != j:
+                distance = round(geodesic((x1, y1), (x2, y2)).kilometers)
                 distances[(i, j)] = distance
     return distances
 
@@ -332,8 +354,35 @@ print("Main")
 nb_villes = 20
 
 coordinates = generate_coordinates(nb_villes)
+
+# coordinates = {
+#     0: (48.8566, 2.3522),   # Paris
+#     1: (45.7640, 4.8357),   # Lyon
+#     2: (43.7102, 7.2620),   # Nice
+#     3: (43.6047, 1.4442),   # Toulouse
+#     4: (47.2184, -1.5536),  # Nantes
+#     5: (45.1885, 5.7245),   # Grenoble
+#     6: (49.2583, 4.0317),   # Reims
+#     7: (48.5734, 7.7521),   # Strasbourg
+#     8: (50.6292, 3.0573),   # Lille
+#     9: (43.2965, 5.3698),   # Marseille
+#     10: (47.3220, 5.0415),  # Dijon
+#     11: (48.3904, -4.4861), # Brest
+#     12: (45.7772, 3.0870),  # Clermont-Ferrand
+#     13: (48.6921, 6.1844),  # Nancy
+#     14: (44.8378, -0.5792), # Bordeaux
+#     15: (43.6108, 3.8767),  # Montpellier
+#     16: (47.9029, 1.9093),  # Orléans
+#     17: (49.4944, 0.1079),  # Le Havre
+#     18: (48.1173, -1.6778), # Rennes
+#     19: (50.6320, 3.0586)   # Roubaix
+# }
+
 distances = calculate_distances(coordinates)
+# distances = calculate_real_distances(coordinates)
+
 distance_matrix = distances_to_matrix(distances, nb_villes)
+
 random.seed(9)
 path = generate_path(nb_villes, 0)
 random.seed()
@@ -351,13 +400,9 @@ print("Distance : ", tabou_distance)
 # plot_vrp_solutions(tabou, tabou_distance, courants, meilleurs_courants, nb_villes)
 
 # Run multi start
-nb_test = 30
+nb_test = 100
 sol_max, val_max, nb_test, solutions, best_solutions = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
 plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
-
-print("solutions : ", solutions)
-print("best_solutions : ", best_solutions)
-
 
 
 # # Run the exact solver
