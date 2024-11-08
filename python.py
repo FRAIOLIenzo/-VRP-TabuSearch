@@ -29,7 +29,6 @@ def calculate_distances(coordinates):
                 distances[(i, j)] = distance
     return distances
 
-
 def distances_to_matrix(distances, nb_villes):
     matrix = [[0] * nb_villes for _ in range(nb_villes)]
     for (i, j), distance in distances.items():
@@ -119,7 +118,6 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
                                                                                
     return meilleure_globale, courantes, meilleures_courantes     
 
-#-------------------------------------------------------------------MULTI-START
 def multi_start(nb_villes, solution_initiale, distance_matrix, nb_test):
     taille_tabou = 30
     iter_max = 50
@@ -139,8 +137,6 @@ def multi_start(nb_villes, solution_initiale, distance_matrix, nb_test):
         sac = generate_path(nb_villes, 0)
 
     return sol_max, val_max, nb_test
-
-#---------------------------------------------------PULP
 
 def solve_vrp_with_pulp(distance_matrix):
     num_cities = len(distance_matrix)
@@ -199,37 +195,41 @@ def solve_vrp_with_pulp(distance_matrix):
     else:
         return None, None
 
-
-#---------------------------------------------------PLOT 
-def plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test):
-    plt.figure(figsize=(15, 10))
-
-    # Plot 1: Cities and Tabu Search path
-    plt.subplot(2, 2, 1)
-    plt.scatter(*zip(*coordinates.values()), c='blue')
-    plt.scatter(*coordinates[tabou[0]], c='green')
+def plot_tabu_search_path(coordinates, tabou, tabou_distance, subplot_position):
+    plt.subplot(*subplot_position)
+    plt.scatter(*zip(*coordinates.values()), c='blue', label="Cities")
+    plt.scatter(*coordinates[tabou[0]], c='green', label="Start City")
     for i in range(len(tabou) - 1):
         city1 = coordinates[tabou[i]]
         city2 = coordinates[tabou[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
     plt.title(f"Tabu Search Path: {tabou_distance}")
-
-    # Plot 2: Solution evolution
-    plt.subplot(2, 2, 2)
-    plt.plot(range(len(courants)), courants, label='Current solution')
-    plt.plot(range(len(courants)), meilleurs_courants, label='Best solution')
-    plt.title("Solution Evolution")
     plt.legend()
-
-    # Plot 3: Multi start best solution
-    plt.subplot(2, 2, 3)
-    plt.scatter(*zip(*coordinates.values()), c='blue')
-    plt.scatter(*coordinates[sol_max[0]], c='green')
+def plot_solution_evolution(courants, meilleurs_courants, subplot_position):
+    plt.subplot(*subplot_position)
+    plt.plot(range(len(courants)), courants, label='Current Solution', color='blue')
+    plt.plot(range(len(meilleurs_courants)), meilleurs_courants, label='Best Solution', color='orange')
+    plt.title("Solution Evolution")
+    plt.xlabel("Iteration")
+    plt.ylabel("Solution Value")
+    plt.legend()
+def plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, subplot_position):
+    plt.subplot(*subplot_position)
+    plt.scatter(*zip(*coordinates.values()), c='blue', label="Cities")
+    plt.scatter(*coordinates[sol_max[0]], c='green', label="Start City")
     for i in range(len(sol_max) - 1):
         city1 = coordinates[sol_max[i]]
         city2 = coordinates[sol_max[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Multi-start Best Solution: {val_max}, en {nb_test} essais")
+    plt.title(f"Multi-start Best Solution: {val_max}, after {nb_test} attempts")
+    plt.legend()
+
+def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test):
+    plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
+
+    plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
+
+    plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, (2, 2, 3))
 
     # Add overall title
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
@@ -285,7 +285,7 @@ def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleu
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 20
+nb_villes = 100
 # 398 pour 20 villes
 coordinates = generate_coordinates(nb_villes)
 distances = calculate_distances(coordinates)
@@ -304,13 +304,15 @@ tabou_distance = calculate_path_distance(tabou, distance_matrix)
 stop = time.process_time()
 print("calculé en ", stop-start, 's')
 
+
+#Run multi start
 nb_test = 30
 sol_max, val_max, nb_test = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
-# plot_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test)
+plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test)
 
-# Run the exact solver
-pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
-plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test)
+# # Run the exact solver
+# pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
+# plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test)
 
 
 #---------------------------------------------------------------Statistique Liste Tabou
