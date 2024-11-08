@@ -12,10 +12,11 @@ from tqdm import tqdm
 def generate_coordinates(nb_villes, x_max=100, y_max=100):
     random.seed(9)
     coordinates = {}
-    for i in range(nb_villes):
+    while len(coordinates) < nb_villes:
         x = random.randint(1, x_max)
         y = random.randint(1, y_max)
-        coordinates[i] = (x, y)
+        if (x, y) not in coordinates.values():
+            coordinates[len(coordinates)] = (x, y)
     random.seed()
     return coordinates
 
@@ -124,26 +125,24 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 100
+nb_villes = 20
 
 coordinates = generate_coordinates(nb_villes)
-# print(f"coordinates : {coordinates}")
-plt.scatter(*zip(*coordinates.values()))
-plt.title("City Coordinates")
-plt.xlabel("X Coordinate")
-plt.ylabel("Y Coordinate")
-plt.show()
+
+# Plot the cities
+# plt.scatter(*zip(*coordinates.values()))
+# plt.title("City Coordinates")
+# plt.xlabel("X Coordinate")
+# plt.ylabel("Y Coordinate")
+# plt.show()
 
 distances = calculate_distances(coordinates)
 
 distance_matrix = distances_to_matrix(distances, nb_villes)
-# for row in distance_matrix:
-#     print(" ".join(f"{dist:3}" for dist in row))
-# print("matrix")
+
 random.seed(9)
 path = generate_path(nb_villes, 0)
 random.seed()
-# print(f"path : {path}")
 
 start = time.process_time()
 # Initialisation des paramètres
@@ -154,9 +153,22 @@ tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_
 tabou_distance = calculate_path_distance(tabou, distance_matrix)
 stop = time.process_time()
 # print(f"tabou : {tabou}")
+
+
+# Plot the cities and the path found by the Tabu Search
+plt.scatter(*zip(*coordinates.values()), c='blue')
+for i in range(len(tabou) - 1):
+    city1 = coordinates[tabou[i]]
+    city2 = coordinates[tabou[i + 1]]
+    plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+plt.title(f"Path found by Tabu Search {tabou_distance}")
+plt.xlabel("X Coordinate")
+plt.ylabel("Y Coordinate")
+plt.show()
 print(f"tabou_distance : {tabou_distance}")
 print("calculé en ", stop-start, 's')
 
+# Plot the evolution of the current solution and the best solution found
 plt.xlabel("nb itérations", fontsize=16)
 plt.ylabel("valeur", fontsize=16)
 plt.plot(range(len(courants)), courants, label='Solution courante')
