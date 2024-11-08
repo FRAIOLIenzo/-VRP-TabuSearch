@@ -20,6 +20,7 @@ import statistics
 from tqdm import tqdm
 from itertools import combinations
 from geopy.distance import geodesic
+import csv
 
 #---------------------------------------------------------------Fonctions----------------------------------------------------------------
 def generate_coordinates(nb_villes, x_max=100, y_max=100, min_distance=5):
@@ -349,37 +350,34 @@ def test_tabou_search_impact(tabou_min, tabou_max, nb_villes, nb_test, iter_max)
 
     return moyennes, deviations
 
+#---------------------------------------------------------------Save/Load----------------------------------------------------------------
+def save_coordinates_to_csv(coordinates, filename):
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["City", "Latitude", "Longitude"])
+        for city, (lat, lon) in coordinates.items():
+            writer.writerow([city, lat, lon])
+
+def load_coordinates_from_csv(filename):
+    coordinates = {}
+    with open(filename, mode='r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip header
+        for row in reader:
+            city, lat, lon = int(row[0]), float(row[1]), float(row[2])
+            coordinates[city] = (lat, lon)
+    return coordinates
 #---------------------------------------------------------------Main----------------------------------------------------------------
 print("Main")
-nb_villes = 20
+nb_villes = 30
 
-coordinates = generate_coordinates(nb_villes)
+# coordinates = generate_coordinates(nb_villes)
 
-# coordinates = {
-#     0: (48.8566, 2.3522),   # Paris
-#     1: (45.7640, 4.8357),   # Lyon
-#     2: (43.7102, 7.2620),   # Nice
-#     3: (43.6047, 1.4442),   # Toulouse
-#     4: (47.2184, -1.5536),  # Nantes
-#     5: (45.1885, 5.7245),   # Grenoble
-#     6: (49.2583, 4.0317),   # Reims
-#     7: (48.5734, 7.7521),   # Strasbourg
-#     8: (50.6292, 3.0573),   # Lille
-#     9: (43.2965, 5.3698),   # Marseille
-#     10: (47.3220, 5.0415),  # Dijon
-#     11: (48.3904, -4.4861), # Brest
-#     12: (45.7772, 3.0870),  # Clermont-Ferrand
-#     13: (48.6921, 6.1844),  # Nancy
-#     14: (44.8378, -0.5792), # Bordeaux
-#     15: (43.6108, 3.8767),  # Montpellier
-#     16: (47.9029, 1.9093),  # Orléans
-#     17: (49.4944, 0.1079),  # Le Havre
-#     18: (48.1173, -1.6778), # Rennes
-#     19: (50.6320, 3.0586)   # Roubaix
-# }
+# Load from CSV
+coordinates = load_coordinates_from_csv('coordinates.csv')
 
-distances = calculate_distances(coordinates)
-# distances = calculate_real_distances(coordinates)
+# distances = calculate_distances(coordinates)
+distances = calculate_real_distances(coordinates)
 
 distance_matrix = distances_to_matrix(distances, nb_villes)
 
@@ -403,7 +401,6 @@ print("Distance : ", tabou_distance)
 nb_test = 100
 sol_max, val_max, nb_test, solutions, best_solutions = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
 plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
-
 
 # # Run the exact solver
 # pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
