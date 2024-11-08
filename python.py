@@ -204,7 +204,6 @@ def plot_tabu_search_path(coordinates, tabou, tabou_distance, subplot_position):
         city2 = coordinates[tabou[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
     plt.title(f"Tabu Search Path: {tabou_distance}")
-    plt.legend()
 def plot_solution_evolution(courants, meilleurs_courants, subplot_position):
     plt.subplot(*subplot_position)
     plt.plot(range(len(courants)), courants, label='Current Solution', color='blue')
@@ -222,70 +221,44 @@ def plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, subpl
         city2 = coordinates[sol_max[i + 1]]
         plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
     plt.title(f"Multi-start Best Solution: {val_max}, after {nb_test} attempts")
-    plt.legend()
+def plot_exact_solution_pulp(coordinates, pulp_path, pulp_distance, tabou_distance, subplot_position=(2, 2, 3)):
+    plt.subplot(*subplot_position)
+    plt.scatter(*zip(*coordinates.values()), c='blue', label="Cities")
+    plt.scatter(*coordinates[pulp_path[0]], c='green', label="Start City")
+    for i in range(len(pulp_path) - 1):
+        city1 = coordinates[pulp_path[i]]
+        city2 = coordinates[pulp_path[i + 1]]
+        plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+    ratio = tabou_distance / pulp_distance if pulp_distance != 0 else float('inf')
+    plt.title(f"Exact Solution PuLP: {pulp_distance}, Ratio: {ratio:.2f}")
 
 def plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test):
+    plt.figure(figsize=(15, 10))
     plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
-
     plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
-
     plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, (2, 2, 3))
 
     # Add overall title
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
     plt.tight_layout()
-
     plt.show()
 
 def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test):
     plt.figure(figsize=(15, 10))
 
-    # Plot 1: Cities and Tabu Search path
-    plt.subplot(2, 2, 1)
-    plt.scatter(*zip(*coordinates.values()), c='blue')
-    plt.scatter(*coordinates[tabou[0]], c='green')
-    for i in range(len(tabou) - 1):
-        city1 = coordinates[tabou[i]]
-        city2 = coordinates[tabou[i + 1]]
-        plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Tabu Search Path: {tabou_distance}")
-
-    # Plot 2: Solution evolution
-    plt.subplot(2, 2, 2)
-    plt.plot(range(len(courants)), courants, label='Current solution')
-    plt.plot(range(len(courants)), meilleurs_courants, label='Best solution')
-    plt.title("Solution Evolution")
-    plt.legend()
-
-    # Plot 3: Exact solution (PuLP)
-    plt.subplot(2, 2, 3)
-    plt.scatter(*zip(*coordinates.values()), c='blue')
-    plt.scatter(*coordinates[pulp_path[0]], c='green')
-    for i in range(len(pulp_path) - 1):
-        city1 = coordinates[pulp_path[i]]
-        city2 = coordinates[pulp_path[i + 1]]
-        plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Exact Solution Pulp: {pulp_distance}, Ratio: {tabou_distance/pulp_distance:.2f}")
-
-    # Plot 4: Multi start best solution
-    plt.subplot(2, 2, 4)
-    plt.scatter(*zip(*coordinates.values()), c='blue')
-    plt.scatter(*coordinates[sol_max[0]], c='green')
-    for i in range(len(sol_max) - 1):
-        city1 = coordinates[sol_max[i]]
-        city2 = coordinates[sol_max[i + 1]]
-        plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
-    plt.title(f"Multi-start Best Solution: {val_max}, Ratio: {val_max/pulp_distance:.2f}, en {nb_test} essais")
+    plot_tabu_search_path(coordinates, tabou, tabou_distance, (2, 2, 1))
+    plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
+    plot_exact_solution_pulp(coordinates, pulp_path, pulp_distance, tabou_distance, (2, 2, 3))
+    plot_multi_start_best_solution(coordinates, sol_max, val_max, nb_test, (2, 2, 4))
 
     # Add overall title
     plt.suptitle(f"VRP Solutions for {nb_villes} cities")
     plt.tight_layout()
-
     plt.show()
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 100
+nb_villes = 50
 # 398 pour 20 villes
 coordinates = generate_coordinates(nb_villes)
 distances = calculate_distances(coordinates)
