@@ -73,8 +73,6 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     valeur_meilleure = calculate_path_distance(solution_initiale, matrix)                       
     valeur_meilleure_globale = valeur_meilleure
     
-    # liste des solutions courantes et des meilleures trouvées, pour afficher la trajectoire
-    # l'élément à la ième position correspond à l'itération i
     courantes = deque(()) #SOLUTION
     meilleures_courantes = deque(()) #SOLUTION
     
@@ -125,16 +123,9 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
 
 # Main -----------------------------------------------------------------------------------
 print("Main")
-nb_villes = 100
-
+nb_villes = 20
+# 398 pour 20 villes
 coordinates = generate_coordinates(nb_villes)
-
-# Plot the cities
-# plt.scatter(*zip(*coordinates.values()))
-# plt.title("City Coordinates")
-# plt.xlabel("X Coordinate")
-# plt.ylabel("Y Coordinate")
-# plt.show()
 
 distances = calculate_distances(coordinates)
 
@@ -157,7 +148,31 @@ print(f"tabou : {tabou}")
 print(f"tabou_distance : {tabou_distance}")
 print("calculé en ", stop-start, 's')
 
+#---------------------------------------------------PLOT 3
+# plt.figure(figsize=(15, 10))
 
+# # Plot 1: Cities and Tabu Search path
+# plt.subplot(2, 2, 1)
+# plt.scatter(*zip(*coordinates.values()), c='blue')
+# plt.scatter(*coordinates[tabou[0]], c='green')
+# for i in range(len(tabou) - 1):
+#     city1 = coordinates[tabou[i]]
+#     city2 = coordinates[tabou[i + 1]]
+#     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+# plt.title(f"Tabu Search Path: {tabou_distance}")
+
+# # Plot 2: Solution evolution
+# plt.subplot(2, 2, 2)
+# plt.plot(range(len(courants)), courants, label='Current solution')
+# plt.plot(range(len(courants)), meilleurs_courants, label='Best solution')
+# plt.title("Solution Evolution")
+# plt.legend()
+
+# # Add overall title
+# plt.suptitle(f"VRP Solutions for {nb_villes} cities")
+# plt.tight_layout()
+
+# plt.show()
 
 #---------------------------------------------------PULP
 
@@ -225,7 +240,34 @@ if pulp_path:
     print(f"Exact solution distance: {pulp_distance}")
     print(f"Tabu/Exact ratio: {tabou_distance/pulp_distance:.2f}")
 
-#---------------------------------------------------PLOT
+#-------------------------------------------------------------------MULTI-START
+
+taille_tabou = 400
+iter_max = 400
+
+# multi-start de 500 itérations
+val_max = float('inf')
+sol_max = None
+
+sac = solution_initiale
+for _ in range(30):
+
+    print("sac = " + str(sac))
+    print("valeur initiale = " + str(calculate_path_distance(sac, distance_matrix)))
+
+    sol_courante, _, _ = recherche_tabou(sac, taille_tabou, iter_max, distance_matrix)
+    val_courante = calculate_path_distance(sol_courante, distance_matrix)
+    print("valeur courante = " + str(val_courante))
+    
+    if val_courante < val_max:
+        print("nouveau max = " + str(val_courante))
+        val_max = val_courante
+        sol_max = sol_courante
+    sac = generate_path(nb_villes, 0)
+
+print("valeur finale = " + str(val_max))
+
+# #---------------------------------------------------PLOT 3
 plt.figure(figsize=(15, 10))
 
 # Plot 1: Cities and Tabu Search path
@@ -255,39 +297,23 @@ for i in range(len(pulp_path) - 1):
     plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
 plt.title(f"Exact Solution Pulp: {pulp_distance}, Ratio: {tabou_distance/pulp_distance:.2f}")
 
+
+# Plot 4: Multi start best solution
+plt.subplot(2, 2, 4)
+
+plt.scatter(*zip(*coordinates.values()), c='blue')
+plt.scatter(*coordinates[sol_max[0]], c='green')
+for i in range(len(sol_max) - 1):
+    city1 = coordinates[sol_max[i]]
+    city2 = coordinates[sol_max[i + 1]]
+    plt.plot([city1[0], city2[0]], [city1[1], city2[1]], 'r-')
+plt.title(f"Multi-start Best Solution: {val_max}")
+
 # Add overall title
 plt.suptitle(f"VRP Solutions for {nb_villes} cities")
 plt.tight_layout()
 
 plt.show()
-
-
-#-------------------------------------------------------------------MULTI-START
-
-# taille_tabou = 60
-# iter_max = 10
-
-# # multi-start de 500 itérations
-# val_max = float('inf')
-# sol_max = None
-
-# sac = solution_initiale
-# for _ in range(10):
-
-#     print("sac = " + str(sac))
-#     print("valeur initiale = " + str(calculate_path_distance(sac, distance_matrix)))
-
-#     sol_courante, _, _ = recherche_tabou(sac, taille_tabou, iter_max, distance_matrix)
-#     val_courante = calculate_path_distance(sol_courante, distance_matrix)
-#     print("valeur courante = " + str(val_courante))
-    
-#     if val_courante < val_max:
-#         print("nouveau max = " + str(val_courante))
-#         val_max = val_courante
-#         sol_max = sol_courante
-#     sac = generate_path(nb_villes, 0)
-
-# print("valeur finale = " + str(val_max))
 
 #---------------------------------------------------------------Statistique Liste Tabou
 
