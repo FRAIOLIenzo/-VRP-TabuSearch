@@ -21,6 +21,7 @@ from tqdm import tqdm
 from itertools import combinations
 from geopy.distance import geodesic
 import csv
+import geopandas as gpd
 
 #---------------------------------------------------------------Fonctions----------------------------------------------------------------
 def generate_coordinates(nb_villes, x_max=100, y_max=100, min_distance=5):
@@ -138,7 +139,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     return meilleure_globale, courantes, meilleures_courantes     
 
 def multi_start(nb_villes, solution_initiale, distance_matrix, nb_test):
-    taille_tabou = 30
+    taille_tabou = 100
     iter_max = 50
 
     # multi-start de n itérations
@@ -301,6 +302,64 @@ def plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleu
     plt.tight_layout()
     plt.show()
 
+#---------------------------------------------------------------Plotting France----------------------------------------------------------------
+def plot_tabu_search_path_france(coordinates, tabou, tabou_distance, subplot_position):
+    plt.subplot(*subplot_position)
+        
+    # Import France's shape data
+    france = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    france = france[france.name == 'France']
+        
+    # Plot France's shape in gray
+    france.plot(ax=plt.gca(), color='lightgray', alpha=0.5)
+        
+    # Plot cities and path
+    coords_values = [(y, x) for x, y in coordinates.values()]  # Swap x,y to y,x
+    plt.scatter(*zip(*coords_values), c='blue', label="Cities")
+    plt.scatter(coordinates[tabou[0]][1], coordinates[tabou[0]][0], c='green', label="Start City")
+    for i in range(len(tabou) - 1):
+        city1 = coordinates[tabou[i]]
+        city2 = coordinates[tabou[i + 1]]
+        plt.plot([city1[1], city2[1]], [city1[0], city2[0]], 'r-')
+        
+    # Set plot limits to France's bounds
+    plt.xlim(-5, 10)  # Longitude bounds for France
+    plt.ylim(41, 52)  # Latitude bounds for France
+        
+    plt.title(f"Tabu Search Path: {tabou_distance}")
+def plot_multi_start_best_solution_france(coordinates, sol_max, val_max, nb_test, tabou_distance, subplot_position):
+    plt.subplot(*subplot_position)
+    # Import France's shape data
+    france = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    france = france[france.name == 'France']
+        
+    # Plot France's shape in gray
+    france.plot(ax=plt.gca(), color='lightgray', alpha=0.5)
+
+    coords_values = [(y, x) for x, y in coordinates.values()]  # Swap x,y to y,x
+    plt.scatter(*zip(*coords_values), c='blue', label="Cities")
+    plt.scatter(coordinates[sol_max[0]][1], coordinates[sol_max[0]][0], c='green', label="Start City")
+    for i in range(len(sol_max) - 1):
+        city1 = coordinates[sol_max[i]]
+        city2 = coordinates[sol_max[i + 1]]
+        plt.plot([city1[1], city2[1]], [city1[0], city2[0]], 'r-')
+    
+    # Set plot limits to France's bounds
+    plt.xlim(-5, 10)  # Longitude bounds for France
+    plt.ylim(41, 52)  # Latitude bounds for France
+    plt.title(f"Multi-start Best Solution: {val_max}, after {nb_test} attempts, Inprovement: {((tabou_distance - val_max) / tabou_distance) * 100:.2f}%")
+
+def plot_multi_vrp_solutions_france(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions):
+    plt.figure(figsize=(15, 10))
+    plot_tabu_search_path_france(coordinates, tabou, tabou_distance, (2, 2, 1))
+    plot_solution_evolution(courants, meilleurs_courants, (2, 2, 2))
+    plot_multi_start_best_solution_france(coordinates, sol_max, val_max, nb_test, tabou_distance, (2, 2, 3))
+    plot_solution_statistics(solutions, best_solutions, (2, 2, 4))
+
+    # Add overall title
+    plt.suptitle(f"VRP Solutions for {nb_villes} cities")
+    plt.tight_layout()
+    plt.show()
 #---------------------------------------------------------------Stat----------------------------------------------------------------
 def test_tabou_search_impact(tabou_min, tabou_max, nb_villes, nb_test, iter_max):
     # Initialisation des résultats
@@ -371,13 +430,14 @@ def load_coordinates_from_csv(filename):
 print("Main")
 nb_villes = 30
 
+#----Test random coordinates
 # coordinates = generate_coordinates(nb_villes)
-
-# Load from CSV
-coordinates = load_coordinates_from_csv('coordinates.csv')
-
 # distances = calculate_distances(coordinates)
+
+#----Test load from CSV coordinates
+coordinates = load_coordinates_from_csv('coordinates.csv')
 distances = calculate_real_distances(coordinates)
+
 
 distance_matrix = distances_to_matrix(distances, nb_villes)
 
@@ -387,7 +447,7 @@ random.seed()
 start = time.process_time()
 
 # Initialisation des paramètres
-taille_tabou = 140
+taille_tabou = 50
 iter_max = 50 
 solution_initiale = path
 tabou, courants, meilleurs_courants = recherche_tabou(solution_initiale, taille_tabou, iter_max, distance_matrix)
@@ -400,8 +460,9 @@ print("Distance : ", tabou_distance)
 # Run multi start
 nb_test = 100
 sol_max, val_max, nb_test, solutions, best_solutions = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
-plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
+# plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
 
+plot_multi_vrp_solutions_france(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
 # # Run the exact solver
 # pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
 # plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test)
