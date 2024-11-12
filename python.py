@@ -22,6 +22,7 @@ from itertools import combinations
 from geopy.distance import geodesic
 import csv
 import geopandas as gpd
+import json
 
 #---------------------------------------------------------------Fonctions----------------------------------------------------------------
 def generate_coordinates(nb_villes, x_max=100, y_max=100, min_distance=5):
@@ -139,7 +140,7 @@ def recherche_tabou(solution_initiale, taille_tabou, iter_max, matrix):
     return meilleure_globale, courantes, meilleures_courantes     
 
 def multi_start(nb_villes, solution_initiale, distance_matrix, nb_test):
-    taille_tabou = 100
+    taille_tabou = 50
     iter_max = 50
 
     # multi-start de n itérations
@@ -426,16 +427,44 @@ def load_coordinates_from_csv(filename):
             city, lat, lon = int(row[0]), float(row[1]), float(row[2])
             coordinates[city] = (lat, lon)
     return coordinates
+
+def load_coordinates_from_json(filename):
+    with open(filename, 'r') as file:
+        data = json.load(file)
+    coordinates = {int(k): (v['Latitude'], v['Longitude']) for k, v in data.items()}
+    return coordinates
+
+
+def load_coordinates_from_json_string(json_string):
+    data = json.loads(json_string)
+    coordinates = {int(k): (v['Latitude'], v['Longitude']) for k, v in data.items()}
+    return coordinates
 #---------------------------------------------------------------Main----------------------------------------------------------------
 print("Main")
-nb_villes = 30
+# nb_villes = 100
+
 
 #----Test random coordinates
 # coordinates = generate_coordinates(nb_villes)
 # distances = calculate_distances(coordinates)
 
 #----Test load from CSV coordinates
-coordinates = load_coordinates_from_csv('coordinates.csv')
+# coordinates = load_coordinates_from_csv('coordinates.csv')
+
+test = json.dumps({
+    0: {"Cityname": "Paris", "Latitude": 48.8534951, "Longitude": 2.3483915},
+    1: {"Cityname": "Lille", "Latitude": 50.6365654, "Longitude": 3.0635282},
+    2: {"Cityname": "Lyon", "Latitude": 45.7578137, "Longitude": 4.8320114},
+    3: {"Cityname": "Marseille", "Latitude": 43.2961743, "Longitude": 5.3699525},
+    4: {"Cityname": "Toulouse", "Latitude": 43.6044622, "Longitude": 1.4442469},
+    5: {"Cityname": "Nice", "Latitude": 43.7009358, "Longitude": 7.2683912},
+    6: {"Cityname": "Nantes", "Latitude": 47.2186371, "Longitude": -1.5541362},
+    7: {"Cityname": "Strasbourg", "Latitude": 48.584614, "Longitude": 7.7507127},
+    8: {"Cityname": "Montpellier", "Latitude": 43.6112422, "Longitude": 3.8767337},
+    9: {"Cityname": "Bordeaux", "Latitude": 44.837789, "Longitude": -0.57918}
+})
+coordinates = load_coordinates_from_json_string(test)
+nb_villes = len(coordinates)
 distances = calculate_real_distances(coordinates)
 
 
@@ -461,8 +490,8 @@ print("Distance : ", tabou_distance)
 nb_test = 100
 sol_max, val_max, nb_test, solutions, best_solutions = multi_start(nb_villes, solution_initiale, distance_matrix, nb_test)
 # plot_multi_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
-
 plot_multi_vrp_solutions_france(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, nb_villes, nb_test, solutions, best_solutions)
+
 # # Run the exact solver
 # pulp_path, pulp_distance = solve_vrp_with_pulp(distance_matrix)
 # plot_all_vrp_solutions(coordinates, tabou, tabou_distance, courants, meilleurs_courants, sol_max, val_max, pulp_path, pulp_distance, nb_villes, nb_test)
